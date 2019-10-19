@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Accessing Form Elements</title>
+</head>
+<body>
+
+	<h1>Accessing Form Elements</h1>
+
+	<form name="buckysform">
+		Username: <input type="text" name="username">
+		Password: <input type="Password" name="password">
+
+		<input type="button" value="Submit" name="submit">
+	</form>
+
+	<script type="text/javascript">
+		
+		var x = document.forms[0].elements[0].name;
+		document.write(x+"<br>");
+
+		var y = document.buckysform.elements[1].name;
+		document.write(y+"<br>");
+
+		var z = document.buckysform.submit.value;
+		document.write(z+"<br>");
+
+	</script>
+
+</body>
+</html>

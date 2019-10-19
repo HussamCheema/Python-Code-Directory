@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Accessing Forms</title>
+
+</head>
+<body>
+
+	<h1>Accessing Forms</h1>
+
+	<form>
+		
+		Username: <input type="text" name="username">
+		Password: <input type="Password" name="password">
+
+		<input type="button" value="Submit" name="submit">
+
+	</form>
+
+
+	<script type="text/javascript">
+		
+		var len = document.forms[0].length; //length of 1st form in your webpage
+
+		document.write("Length: "+len);
+
+	</script>
+
+</body>
+</html>

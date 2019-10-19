@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Associating functions to an object</title>
+
+	<script type="text/javascript">
+		
+		function people(name, age){
+			this.name = name;
+			this.age = age;
+			this.yearsUntilRetire = yearsLeft; // no parenthesis here!!
+
+		}
+
+		function yearsLeft(){
+			var numYears = 65 - this.age;
+			return numYears;
+		}
+
+		var natalie = new people("Natalie Portman", 28);
+
+	</script>
+
+</head>
+<body>
+
+	<h1>Associating functions to an object</h1>
+
+	<script type="text/javascript">
+		
+		document.write(natalie.yearsUntilRetire()); //here remember to use parenthesis
+
+	</script>
+
+</body>
+</html>
