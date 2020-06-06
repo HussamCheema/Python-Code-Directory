@@ -1,0 +1,392 @@
+django-admin startproject webApp
+python3 manage.py startapp <app_name>
+python3 manage.py migrate
+python3 manage.py runserver
+
+// After making models
+python3 manage.py makemigrations <app_name> //after creating or changing class/model
+python3 manage.py migrate //after making migrations
+python manage.py sqlmigrate <migration_name> <migration_id>
+
+//Django Database API on console
+python manage.py shell
+[
+> from music.models import Album, Song
+> Album.objects.all()
+> a = Album(artist="Taylor Swift", album_title="red", genre="Country", album_logo="any image src")
+> a.save() //save object to database
+> a.artist
+> a.album_title
+> a.id // or a.pk
+
+> Album.objects.filter(id=1)
+> Album.objects.filter(artist__startswith = "Taylor")
+> Album.objects.filter(artist="Taylor Swift")
+]
+
+--------------------------------------------------------------
+
+[
+> from music.models import Album, Song
+> album1 = Album.objects.get(pk=1)
+> song = Song()
+> song.album = album1
+
+
+> album1.song_set.all() //generically <album_obj>.<associated_class>_set.all()
+
+> album1.song_set.create(song_title="", file_type="") // we don't need to assign album object here, (one way to create song), it also returns a reference of the song.
+> song = album1.song_set.create(song_title="", file_type="")
+
+> album1.song_set.count() // will count how many objects in album1
+
+]
+
+// Create Admin
+python manage.py createsuperuser //enter username, email and password
+
+// In admin.py
+from .models import Album, Song
+admin.site.register(Album)
+admin.site.register(Song)
+
+
+CODE SECTION
+------------
+
+-> path('<int:album_id>/', views.detail, name='detail'),
+
+-> def index(request):
+      all_albums = Album.objects.all()
+      html = ''
+
+      for album in all_albums:
+          url = str(album.id) + '/'
+          html += "<a href=" + url + ">" + str(album.album_title) + "</a><br>"
+
+      return HttpResponse(html)
+
+------------------------------------------------------------------------------------
+
+->from django.template import loader
+
+-> def index(request):
+    all_albums = Album.objects.all()
+    template = loader.get_template('music/index.html')
+    context = {
+        'all_albums': all_albums,
+    }
+
+    return HttpResponse(template.render(context, request))
+
+-------------------------------------------------------------------------------------
+
+{% if all_albums %}
+    <ul>
+        {% for album in all_albums %}
+        <li><a href="/music/{{ album.id }}/">{{ album.album_title }}</a></li>
+        {% endfor %}
+    </ul>
+{% else %}
+    <h1>You don't have any album available</h1>
+{% endif %}
+
+-------------------------------------------------------------------------------------
+
+
+def index(request):
+    all_albums = Album.objects.all()
+    context = {'all_albums': all_albums}
+
+    return render(request, 'music/index.html', context)
+
+
+-------------------------------------------------------------------------------------
+
+
+def detail(request, album_id):
+
+    try:
+        album = Album.objects.get(pk=album_id)
+    except Album.DoesNotExist:
+        raise Http404
+    return render(request, 'music/detail.html', {'album': list(album)})
+
+
+-------------------------------------------------------------------------------------
+
+def detail(request, album_id):
+   album = get_object_or_404(Album, pk=album_id)
+
+-------------------------------------------------------------------------------------
+
+// No paranthesis
+{% for song in album.song_set.all %}
+    <li></li>
+{% endfor %}
+
+
+--------------------------------------------------------------------------------------
+// hard coded url
+
+        <a href="/music/{{ album.id }}/">{{ album.album_title }}</a>
+
+--------------------------------------------------------------------------------------
+// dynamic url
+// use name property of urls, album_id is variable used in url
+
+	<a href="{% url 'detail' album.id %}">{{ album.album_title }}</a>
+
+--------------------------------------------------------------------------------------
+
+app_name = "music" // in music/urls.py
+
+// in view
+<a href="{% url 'music:detail' album.id %}">{{ album.album_title }}</a>
+
+// It knows now that detail is from music app not from anyother app.
+
+---------------------------------------------------------------------------------------
+// HTTP404 shortcut
+from django.shortcuts import get_object_or_404
+
+album = get_object_or_404(Album, pk=album_id)
+
+----------------------------------------------------------------------------
+// Django Form
+
+<form action="{% url 'music:favorite' album.id %}" method="post">
+    {% csrf_token %}
+
+    {% for song in album.song_set.all %}
+        <input type="radio" id="song{{ forloop.counter }}" name="song" value="{{ song.id }}"/>
+        <label for="song{{ forloop.counter }}">
+            {{ song.song_title }}
+            {% if song.is_favorite %}
+                <img src="http://icons.iconarchive.com/icons/paomedia/small-n-flat/1024/heart-icon.png" width="13px" height="13px" />
+            {% endif %}
+        </label><br>
+    {% endfor %}
+
+    <input type="submit" value="Favorite">
+</form>
+
+--------------------------------------------------------------------------------
+//Loading static files
+
+{% load staticfiles %}
+<link rel="stylesheet" type="text/css" href="{% static 'music/style.css' %}"/>
+
+
+--------------------------------------------------------------------------------------------------
+
+//Generic Views
+
+from django.views import generic
+from .models import Album, Song
+
+
+class IndexView(generic.ListView):
+    template_name = 'music/index.html'
+    context_object_name = 'all_albums'
+
+    def get_queryset(self):
+        return Album.objects.all()
+
+
+class DetailView(generic.DetailView):
+    model = Album
+    template_name = 'music/detail.html'
+
+
+
+-------------------------------------------
+
+from django.urls import path
+from . import views
+
+app_name = "music"
+
+urlpatterns = [
+    path('', views.IndexView.as_view(), name='index'),
+    path('<int:pk>/', views.DetailView.as_view(), name='detail'),
+    # path('<int:album_id>/favorite/', views.favorite, name='favorite'),
+]
+
+
+--------------------------------------------
+
+{% extends 'music/base.html' %}
+
+{% block body %}
+
+        <ul>
+            {% for album in all_albums %}
+                <li><a href="{% url 'music:detail' album.id %}">{{ album.album_title }}</a></li>
+            {% endfor %}
+        </ul>
+
+{% endblock %}
+
+
+----------------------------------------------------------------------------------------------
+
+REST APIs
+----------------------------------------------------------------------------------------------
+
+pip install djangorestframework
+
+install "rest_framework" in Installed Apps in Settings.py
+
+Create model and add it to the admin
+
+// Serializer class will convert model to JSON data.
+
+In serializers.py file:
+-----------------------
+
+from rest_framework import serializers
+from .models import Stock
+
+
+class StockSerializer(serializers.ModelSerializer):
+
+    class Meta:
+        model = Stock
+        # fields = "__all__" # To send all fields including primary keys.
+        fields = ("ticker", "volume")
+
+
+views.py
+--------
+from django.shortcuts import get_object_or_404
+from rest_framework.views import  APIView
+from rest_framework.response import Response
+from rest_framework import status
+from .models import Stock
+from .serializers import StockSerializer
+
+
+# List all stocks or create a new one
+# stocks/
+class StockList(APIView):
+
+    def get(self, request):
+        stocks = Stock.objects.all()
+        serializer = StockSerializer(stocks, many=True)
+        return Response(serializer.data)
+
+    def post(self):
+        pass
+
+
+urls.py
+-------
+from django.contrib import admin
+from django.urls import path
+from rest_framework.urlpatterns import format_suffix_patterns
+from companies import views
+
+
+urlpatterns = [
+    path('admin/', admin.site.urls),
+    path('stocks/', views.StockList.as_view())
+]
+
+urlpatterns = format_suffix_patterns(urlpatterns)
+
+
+-----------------------EDITOR instead of TextArea------------------------
+
+>> pip install django-tinymce4-lite
+
+-> add "tinymce" in settings.py in INSTALLED_APPS
+-> add tinymce configuration in settings.py below ALLOWED_HOSTS = []
+-> add url to your base application urls.py file
+>> path('tinymce/',include('tinymce.urls'))
+
+-> In app in which you want to include, go to admin.py and add following
+
+>> from tinymce.widgets import TinyMCE
+>> from django.db import models
+
+class <classname>Admin(admin.ModelAdmin):
+	fieldsets = [
+			('Content',{"fields":["job_content"]}),
+			('URLs',{"fields":["url1","base_url"]})
+		]
+
+	formfield_overrides = {
+			models.TextField: {'widget':TinyMCE()}
+		}
+
+admin.site.register(classname, <classname>Admin)
+e.g; >> admin.site.register(Tutorial, TutorialAdmin)
+
+-> Use "{{ xyz | safe}}" to get output in html file
+-> To use css and js files of tinymce, inlcude following code into the file
+
+>> <link href='{% static 'tinymce/css/prism.css' %}' rel='stylesheet'>
+>> <script src="{% static 'tinymce/js/prism.js' %}"></script>
+
+-------------------------------------------------------------------------
+
+// Gettings User from Post class where one user can have multiple posts. 1 to N relationship
+>> post = Post.objects.filter(...)
+>> post.author // will give us the user if post.author was equal to user object
+>> post.author.name // will give us the username
+
+//If we want to get posts of a one particular user
+-> .<relatedmodel>_set
+e.g, 
+>> user.post_set.all() // will give us all the posts related to 'user' 
+
+// Create new post by user
+>> user.post_set.create(...) //we won't specify the author. we don't need to run save() here.
+
+
+-------------------------------------------------------------------------
+
+// To get beautiful forms
+-> pip install django-crispy-forms
+-> add "crispy-forms" in installed apps in settings.py
+
+// To tell django, which bootstrap crispy-forms will use
+// Add this to settings.py
+CRISPY_TEMPLATE_PACK = 'bootstrap4'
+
+// In register template
+{% load crispy_forms_tags %}
+
+---------------------------------------------------------------------------
+
+// Profile class is a model which has one to one relationship with User class.
+user.profile.image.url // gives us image location
+
+---------------------------------------------------------------------------
+
+//Pagination
+from django.core.paginator import Paginator
+posts = ["1", "2", "3", "4", "5"]
+p = Paginator(posts, 2)
+p.num_pages //3
+
+for page in p.page_range:
+	print(page)
+
+p1 = p.page(1)
+
+p1.number //1
+
+p1.object_list //['1', '2']
+
+p1.has_previous()
+
+p1.has_next()
+
+p1.next_page_number() //2
+
+-----------------------------------------------------------------------------
+
+
+

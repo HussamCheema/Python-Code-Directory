@@ -1,0 +1,67 @@
+--------SET Environment Variable---------
+
+set FLASK_APP = <app_name>.py
+
+-----------------------------------------
+
+>> flask run # Run application
+
+>> set FLASK_DEBUG = 1
+>> set FLASK_ENV=development
+
+-> app.run(debug=True) // for dynamic change
+
+-------------------------------------------
+
+-> pip install flask-wtf # flask forms
+
+-------------------------------------------
+-> from flask import url_for
+<link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='main.css') }}">
+
+-------------------------------------------
+
+app.config['SECRET_KEY'] = 'f49d0380809acbd1ef18f9039fe7401b // In app.py
+
+// To get secret key open python shell and type this:
+>> import secrets
+>> secrets.token_hex(16)
+
+--------------------------------------------
+
+// IN app.py
+from forms import RegistrationForm, LoginForm
+
+@app.route('/register/')
+def register():
+    form = RegistrationForm()
+    return render_template('register.html', title='Register', form=form)
+
+
+@app.route('/login/')
+def login():
+    form = LoginForm()
+    return render_template('login.html', title='Login', form=form)
+
+// IN forms.py
+from flask_wtf import FlaskForm
+from wtforms import StringField, PasswordField, SubmitField, BooleanField
+from wtforms.validators import DataRequired, Length, Email, EqualTo
+
+
+class RegistrationForm(FlaskForm):
+    username = StringField("Username",  # Username will also be our label
+                           validators=[DataRequired(), Length(min=2, max=20)])
+    email = StringField("Email", validators=[DataRequired(), Email])
+    password = PasswordField("Password", validators=[DataRequired()])
+    confirm_password = PasswordField("Confirm Password", validators=[DataRequired(), EqualTo(password)])
+    submit = SubmitField("Sign Up")
+
+
+class LoginForm(FlaskForm):
+    email = StringField("Email", validators=[DataRequired(), Email])
+    password = PasswordField("Password", validators=[DataRequired()])
+    remember = BooleanField("Remember Me")
+    submit = SubmitField("Login")
+----------------------------------------------------------------------------------------------------
+
